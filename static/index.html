@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GoHound - Subdomain Scanner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex flex-col items-center min-h-screen p-6">
+  <h1 class="text-4xl font-bold mb-8">🐶 GoHound</h1>
+
+  <div class="w-full max-w-lg">
+    <input
+      id="domainInput"
+      type="text"
+      placeholder="example.com"
+      class="w-full p-3 rounded text-gray-900"
+    />
+    <button
+      id="scanBtn"
+      class="mt-4 bg-green-500 hover:bg-green-600 px-6 py-3 rounded font-semibold w-full"
+    >
+      Scan Domain
+    </button>
+
+    <div id="results" class="mt-6 bg-gray-800 rounded p-4 min-h-[100px] overflow-auto"></div>
+  </div>
+
+  <script>
+    const scanBtn = document.getElementById('scanBtn');
+    const domainInput = document.getElementById('domainInput');
+    const resultsDiv = document.getElementById('results');
+
+    scanBtn.addEventListener('click', async () => {
+      const domain = domainInput.value.trim();
+      if (!domain) {
+        alert('Please enter a domain');
+        return;
+      }
+
+      resultsDiv.innerHTML = 'Scanning...';
+
+      try {
+        const res = await fetch(`/api/scan?domain=${encodeURIComponent(domain)}`);
+        if (!res.ok) throw new Error('Failed to fetch results');
+        const data = await res.json();
+
+        if (data.length === 0) {
+          resultsDiv.innerHTML = 'No subdomains found';
+        } else {
+          resultsDiv.innerHTML =
+            '<ul>' +
+            data
+              .map(
+                (item) =>
+                  `<li class="border-b border-gray-700 py-2">
+                    <strong>${item.subdomain}</strong><br/>
+                    Open Ports: ${
+                      item.open_ports.length > 0 ? item.open_ports.join(', ') : 'None'
+                    }
+                  </li>`
+              )
+              .join('') +
+            '</ul>';
+        }
+      } catch (err) {
+        resultsDiv.innerHTML = 'Error: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
